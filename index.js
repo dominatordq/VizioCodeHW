@@ -71,9 +71,9 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         //console.log('id:', $content.attr('id'));
         i++;
     } 
-    /*
+
     let folder = "images/";
-    // add every image to a list
+    // add every image
     $.ajax({
         url : folder,
         success: function (data) {
@@ -84,11 +84,5 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
             });
         }
     });
-    */
 
-   const fileSelector = document.getElementById('file-selector');
-   fileSelector.addEventListener('change', (event) => {
-        const fileList = event.target.files;
-        console.log(fileList);
-   });
 });
