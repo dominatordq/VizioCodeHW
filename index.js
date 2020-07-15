@@ -42,7 +42,7 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         // if a src exists
         if ($content.attr('src') !== undefined) {
             let url = "https://www.vizio.com" + $content.attr('src');
-            //console.log("https://www.vizio.com/en/smartcast" + url);
+            console.log(url);
             let width, height;
             
             $(document).ready(function() {
@@ -60,6 +60,5 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         //console.log(i, img);
         //console.log('id:', $content.attr('id'));
         i++;
-    }
-    
+    } 
 });
