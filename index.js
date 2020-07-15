@@ -42,9 +42,10 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         // if a src exists
         if ($content.attr('src') !== undefined) {
             let url = "https://www.vizio.com" + $content.attr('src');
-            console.log(url);
+            //console.log(url);
             let width, height;
             
+            // create an img tag from the url, display width and height
             $(document).ready(function() {
                 $("<img/>").attr('src', url)
                   .on('load', function() {
