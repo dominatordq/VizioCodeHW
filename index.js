@@ -29,12 +29,23 @@ function getMeta(url){
 }
 */
 
+let fs = require('fs'),
+                request = require('request');
+            
+let download = function(url, filename, callback) {
+    request.head(url, function(err, res, body) {
+        console.log('content-type', res.headers['content-type']);
+        request(url).pipe(fs.createWriteStream(filename)).on('close', callback);
+    });
+}
+
 fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
     let htmlBody = body.toString(); // convert html of website to a string
     //console.log(htmlBody);
     //console.log(htmlBody.match(regexp));
     let images = htmlBody.match(regexp); // match all the img tags and return
     let i = 0;
+    
     // iterate through each image
     for (let img of images) {
         let $content = $($.parseHTML(img)); // convert string to html so jquery can parse it
@@ -44,22 +55,40 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
             let url = "https://www.vizio.com" + $content.attr('src');
             //console.log(url);
             let width, height;
-            
+
             // create an img tag from the url, display width and height
-            $(document).ready(function() {
-                $("<img/>").attr('src', url)
-                  .on('load', function() {
-                    console.log(`${this.width} x ${this.height}`);
-                    width = this.width;
-                    height = this.height;
-                  });
-            });
             
             //getMeta(url);
         //    imgArray.push(new Image($content.attr('id'), $content.attr('src'), 0, 0, url));
         }
+        
+        if ($content.attr('data-src') !== undefined) {
+            let url = "https://www.vizio.com" + $content.attr('data-src');
+            //console.log(url);
+        }
+
         //console.log(i, img);
         //console.log('id:', $content.attr('id'));
         i++;
     } 
+    /*
+    let folder = "images/";
+    // add every image to a list
+    $.ajax({
+        url : folder,
+        success: function (data) {
+            $(data).find("a").attr("href", function (i, val) {
+                if( val.match(/\.(jpe?g|png|gif|svg)$/) ) { 
+                    $("body").append( "<img src='"+ folder + val +"'>" );
+                } 
+            });
+        }
+    });
+    */
+
+   const fileSelector = document.getElementById('file-selector');
+   fileSelector.addEventListener('change', (event) => {
+        const fileList = event.target.files;
+        console.log(fileList);
+   });
 });
