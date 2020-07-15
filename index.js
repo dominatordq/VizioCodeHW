@@ -4,20 +4,20 @@ let dom = new jsdom.JSDOM();
 let window = dom.window;
 let document = window.document;
 let fs = require("fs");
-let readimage = require("readimage");
+var sizeOf = require('image-size');
 
 let $ = require('jquery')(window);
 console.log('version:', $.fn.jquery);
 
 let regexp = /<img[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/g; // regular experssion for img tags
 
-/*let Image = function(id, desc, height, width, url) {
+let Image = function(id, desc, height, width, url) {
     this.id = id;
     this.desc = desc;
     this.height = height;
     this.width = width;
     this.url = url;
-}*/
+}
 
 let imgArray = new Array();
 /*
@@ -54,38 +54,34 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         // if a src exists
         if ($content.attr('src') !== undefined) {
             let url = "https://www.vizio.com" + $content.attr('src');
-            //console.log(url);
-            //console.log($content.attr('src'));
-            let width, height;
             let fileName = url.slice(url.lastIndexOf('/') + 1);
-            if (!fileName.includes(".svg")) {
-                var filedata = fs.readFileSync(__dirname + '\\images\\' + fileName);
-                //var filedata = fs.readFileSync("C:/Users/ginoq/Documents/VizioCodeHW/images/2020-v5-series-v585-h1-v585-h11-updated.png");
-                readimage(filedata, function (err, image) {
-                    if (err) {
-                        console.log("failed to parse the image")
-                        console.log(err)
-                    }
-                    console.log(fileName);
-                    console.log(image.width + 'X' + image.height);
-                });
-            } else {
-                console.log("Skipping .svg for now");
-            }
-            // create an img tag from the url, display width and height
-            
+            let filedata = fs.readFileSync(__dirname + '\\images\\' + fileName);
+            let dimensions = sizeOf(filedata);
+            //console.log(fileName);            
+            imgArray.push(new Image(i++, fileName, dimensions.height, dimensions.width, url));
+            console.log(imgArray[imgArray.length-1].id);
+            console.log(imgArray[imgArray.length-1].desc);
+            console.log(dimensions.width + 'X' + dimensions.height);
+
             //getMeta(url);
         //    imgArray.push(new Image($content.attr('id'), $content.attr('src'), 0, 0, url));
         }
         
         if ($content.attr('data-src') !== undefined) {
             let url = "https://www.vizio.com" + $content.attr('data-src');
+            let fileName = url.slice(url.lastIndexOf('/') + 1);
+            let filedata = fs.readFileSync(__dirname + '\\images\\' + fileName);
+            let dimensions = sizeOf(filedata);
+            imgArray.push(new Image(i++, fileName, dimensions.height, dimensions.width, url));
+            console.log(imgArray[imgArray.length-1].id);
+            console.log(imgArray[imgArray.length-1].desc);
+            console.log(dimensions.width + 'X' + dimensions.height);
             //console.log(url);
         }
 
         //console.log(i, img);
         //console.log('id:', $content.attr('id'));
-        i++;
+        //i++;
     } 
 
     let folder = "images/";
