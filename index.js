@@ -82,8 +82,7 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
 
     // display images on webpage (using a regex -- very sloppy hehe)
     if (alreadyDisplayed === false) {
-        let divPos = 0;
-            
+    
         fs.readFile("./index.html", 'utf8', function(err, data) {
             if (err) return console.log(err);
         
