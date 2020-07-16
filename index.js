@@ -4,6 +4,7 @@ let dom = new jsdom.JSDOM();
 var window1 = dom.window;
 var document1 = window1.document;
 let fs = require("fs");
+let request = require('request');
 let sizeOf = require('image-size');
 const express = require('express');
 const app = express();
@@ -24,7 +25,21 @@ let Image = function(id, desc, height, width, url) {
 
 let imgArray = new Array();
 
-//let fs = require('fs'), request = require('request');
+let download = function(uri, filename, callback){
+    request.head(uri, function(err, res, body){
+      console.log('content-type:', res.headers['content-type']);
+      console.log('content-length:', res.headers['content-length']);
+  
+      request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+    });
+  };
+
+let populateArray = function(id, fileName, url) {
+    let filedata = fs.readFileSync(__dirname + '\\images\\' + fileName);
+    // read file to get dimensions
+    let dimensions = sizeOf(filedata); // get dimensions
+    imgArray.push(new Image(id, fileName, dimensions.height, dimensions.width, url)); // push this image to the array of objs
+}
 
 fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
     let htmlBody = body.toString(); // convert html of website to a string
@@ -40,33 +55,24 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         // if a src exists
         if ($content.attr('src') !== undefined) {
             let url = "https://www.vizio.com" + $content.attr('src');
+            
             let fileName = url.slice(url.lastIndexOf('/') + 1);
-            let filedata = fs.readFileSync(__dirname + '\\images\\' + fileName); // read file to get dimensions
-            let dimensions = sizeOf(filedata); // get dimensions
-            //console.log(fileName);            
-            imgArray.push(new Image(i++, fileName, dimensions.height, dimensions.width, url)); // push this image to the array of objs
-            //console.log(imgArray[imgArray.length-1].id);
-            //console.log(imgArray[imgArray.length-1].desc);
-            //console.log(dimensions.width + 'X' + dimensions.height);
-
-            //getMeta(url);
-        //    imgArray.push(new Image($content.attr('id'), $content.attr('src'), 0, 0, url));
+            download(url, './images/' + fileName, function(){
+                console.log('Downloaded: ' + fileName);
+                populateArray(i++, fileName, url);
+            });
         }
 
         // if a data-src exists as opposed to a src
         if ($content.attr('data-src') !== undefined) {
             let url = "https://www.vizio.com" + $content.attr('data-src');
             let fileName = url.slice(url.lastIndexOf('/') + 1);
-            let filedata = fs.readFileSync(__dirname + '\\images\\' + fileName);
-            let dimensions = sizeOf(filedata);
-            imgArray.push(new Image(i++, fileName, dimensions.height, dimensions.width, url));
-            //console.log(imgArray[imgArray.length-1].id);
-            //console.log(imgArray[imgArray.length-1].desc);
-            //console.log(dimensions.width + 'X' + dimensions.height);
-            //console.log(url);
+            
+            download(url, "./images/" + fileName, function(){
+                console.log('Downloaded: ' + fileName);
+                populateArray(i++, fileName, url);
+            });
         }
-        //console.log(i, img);
-        //console.log('id:', $content.attr('id'));
     } 
 
     // sort function from smallest to greatest height
