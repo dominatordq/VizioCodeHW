@@ -15,6 +15,7 @@ console.log('version:', $.fn.jquery);
 
 let regexp = /<img[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/g; // regular experssion for img tags
 
+// Image object to store image properties
 let Image = function(id, desc, height, width, url) {
     this.id = id;
     this.desc = desc;
@@ -23,19 +24,22 @@ let Image = function(id, desc, height, width, url) {
     this.url = url;
 }
 
-let imgArray = new Array();
+let imgArray = new Array(); // create an array of image objects
 
+// function that downloads images from https://www.vizio.com/en/smartcast/... 
 let download = function(uri, filename, callback){
     request.head(uri, function(err, res, body){
       console.log('content-type:', res.headers['content-type']);
       console.log('content-length:', res.headers['content-length']);
   
-      request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+      request(uri).pipe(fs.createWriteStream(filename)).on('close', callback); // request/write image from url
     });
-  };
+};
 
+// function that populates image object array consisting of (<id of img>, <height>, <width>, <url of img>)
 let populateArray = function(id, fileName, url) {
     let filedata = fs.readFileSync(__dirname + '\\images\\' + fileName);
+    
     // read file to get dimensions
     let dimensions = sizeOf(filedata); // get dimensions
     imgArray.push(new Image(id, fileName, dimensions.height, dimensions.width, url)); // push this image to the array of objs
@@ -54,9 +58,10 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         $content.attr('id', i); // add an id to each image
         // if a src exists
         if ($content.attr('src') !== undefined) {
-            let url = "https://www.vizio.com" + $content.attr('src');
+            let url = "https://www.vizio.com" + $content.attr('src'); // url to current image from vizio website 
             
-            let fileName = url.slice(url.lastIndexOf('/') + 1);
+            let fileName = url.slice(url.lastIndexOf('/') + 1); // get the name of the image file itself
+            // call download function to download image to memory
             download(url, './images/' + fileName, function(){
                 console.log('Downloaded: ' + fileName);
                 populateArray(i++, fileName, url);
@@ -89,7 +94,7 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
 
     // display images on webpage (using a regex -- very sloppy hehe)
     if (alreadyDisplayed === false) {
-    
+        // read html file from memory
         fs.readFile("./index.html", 'utf8', function(err, data) {
             if (err) return console.log(err);
         
