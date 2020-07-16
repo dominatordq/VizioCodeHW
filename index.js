@@ -23,7 +23,6 @@ let Image = function(id, desc, height, width, url) {
 }
 
 let imgArray = new Array();
-let alreadyDisplayed = true;
 
 //let fs = require('fs'), request = require('request');
 
@@ -80,6 +79,8 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
 
     const imageDir = __dirname + "\\images\\";
 
+    let alreadyDisplayed = true;
+
     // display images on webpage (using a regex -- very sloppy hehe)
     if (alreadyDisplayed === false) {
     
@@ -92,12 +93,11 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
                 toPrepand.push("<img src=" + "\"" + ".\\images\\" + img.desc + "\"" + ">");
             }
             // convert array of sources to string and write it to index.html
-            data = data.replace(/\<\/div>/g, toPrepand.join('') + '</div>');
+            data = data.replace(/\<\/div class>/g, toPrepand.join('') + '</div>');
             //console.log(data);
             fs.writeFile('./index.html', data, 'utf8', function (err) {
                 if (err) return console.log(err);
             });
-            
             
         });
         alreadyDisplayed = true;
