@@ -29,84 +29,82 @@ let Image = function(id, desc, height, width, url) {
 
 let imgArray = new Array(); // create an array of image objects
 
-// function that downloads images from https://www.vizio.com/en/smartcast/... 
+// function that downloads images from https://www.vizio.com/en/smartcast/... to memory
 let download = function(uri, filename, callback){
     request.head(uri, function(err, res, body){
-      //console.log('content-type:', res.headers['content-type']);
-      //console.log('content-length:', res.headers['content-length']);
-  
-      request(uri).pipe(fs.createWriteStream(filename)).on('close', callback); // request/write image from url
+        request(uri).pipe(fs.createWriteStream(filename)).on('close', callback); // request/write image from url
     });
 };
 
 // function that populates image object array consisting of (<id of img>, <height>, <width>, <url of img>)
 let populateArray = function(id, fileName, url) {
+    // reads image file from memory to get its properties (width, height, etc.)
     let filedata = fs.readFileSync(__dirname + '\\images\\' + fileName);
     
-    // read file to get dimensions
     let dimensions = sizeOf(filedata); // get dimensions
-    imgArray.push(new Image(id, fileName, dimensions.height, dimensions.width, url)); // push this image to the array of objs
-    imgArrayPopulatedCount++;
+    imgArray.push(new Image(id, fileName, dimensions.height, dimensions.width, url)); // push this image to the array of imgs
+    imgArrayPopulatedCount++; // increment the number of images current in the image array
     console.log("ImageArrayProgress: " + imgArrayPopulatedCount + ":" + imgArrayCount);
+
+    // when the image array is full, populate the html with the image tags!
     if (imgArrayCount === imgArrayPopulatedCount) {
         populateHtmlImages();
     }
 }
 
 let populateHtmlImages = function() {
-    console.log("Entered populate images in html file");
+    console.log("Status: Sorting and populating image array");
     // sort function from smallest to greatest height
-    console.log(imgArray.length);
     imgArray.sort(function(a, b) {
         if (a.height - b.height !== 0)
             return a.height - b.height;
         return a.width - b.width;
-    })
-    //console.log(imgArray);
+    });
 
-    const imageDir = __dirname + "\\images\\";
+    const imageDir = __dirname + "\\images\\"; // directory where the images are stored in memory
 
-    let alreadyDisplayed = false;
+    // (line 70-93) display images on webpage (using a regex -- very sloppy hehe)
+    console.log("Building index.html file");
+    // read html template from memory (will clear img tags from between divs)
+    fs.readFile("./baseindex.html", 'utf8', function(err, data) {
+        if (err) return console.log(err);
 
-    // display images on webpage (using a regex -- very sloppy hehe)
-    if (alreadyDisplayed === false) {
-        console.log("Building index.html file");
-        // read html file from memory
-        fs.readFile("./index.html", 'utf8', function(err, data) {
+        // write to index.html
+        fs.writeFile('./index.html', data, 'utf8', function (err) {
             if (err) return console.log(err);
-
-            let toPrepand = [];
-            // get each image source and append to an array
-            for (let img of imgArray){
-                console.log(img.url);
-                toPrepand.push("<img src=" + "\"" + ".\\images\\" + img.desc + "\"" + ">\n");
-                console.log(toPrepand);
-            }
-            // convert array of sources to string and write it to index.html
-            data = data.replace(/\<\/div>/g, toPrepand.join(' ') + '</div>');
-            console.log(data);
-            fs.writeFile('./index.html', data, 'utf8', function (err) {
-                if (err) return console.log(err);
-            });
-            
         });
-        alreadyDisplayed = true;
-    }
 
+        let toPrepand = [];
+        
+        // get each image source and append to an array
+        for (let img of imgArray){
+            toPrepand.push("<img src=" + "\"" + ".\\images\\" + img.desc + "\"" + ">\n");
+        }
+        // convert array of sources to string and write it to index.html
+        data = data.replace(/\<\/div>/g, toPrepand.join(' ') + '</div>');
+        
+        // write final code with img tags to index.html
+        fs.writeFile('./index.html', data, 'utf8', function (err) {
+            if (err) return console.log(err);
+        });
+        
+    });
+    // start express server to execute index.html
     app.use(express.static(__dirname));
     app.get('/', function (req, res) {
         res.sendFile(__dirname + '/index.html');
-    })
+    });
+    app.listen(port, () => console.log('The server running on Port ' + port));
 }
 
+// acts as a main function, gets the images from the vizio url
 fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
     let htmlBody = body.toString(); // convert html of website to a string
-    //console.log(htmlBody);
     console.log(htmlBody.match(regexp));
     let images = htmlBody.match(regexp); // match all the img tags and return
     let i = 0;
     
-    imgArrayCount = images.length;
+    imgArrayCount = images.length; // stores the number of images present
 
     // iterate through each image
     for (let img of images) {
@@ -120,7 +118,7 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
             // call download function to download image to memory
             download(url, './images/' + fileName, function(){
                 console.log('Downloaded: ' + fileName);
-                populateArray(i++, fileName, url);
+                populateArray(i++, fileName, url); // call function to populate array
             });
         }
 
@@ -135,45 +133,4 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
             });
         }
     } 
-
-    // // sort function from smallest to greatest height
-    // imgArray.sort(function(a, b) {
-    //     if (a.height - b.height !== 0)
-    //         return a.height - b.height;
-    //     return a.width - b.width;
-    // })
-    // console.log(imgArray);
-
-    // const imageDir = __dirname + "\\images\\";
-
-    // let alreadyDisplayed = true;
-
-    // // display images on webpage (using a regex -- very sloppy hehe)
-    // if (alreadyDisplayed === false) {
-    //     // read html file from memory
-    //     fs.readFile("./index.html", 'utf8', function(err, data) {
-    //         if (err) return console.log(err);
-        
-    //         let toPrepand = [];
-    //         // get each image source and append to an array
-    //         for (let img of imgArray){
-    //             toPrepand.push("<img src=" + "\"" + ".\\images\\" + img.desc + "\"" + ">");
-    //         }
-    //         // convert array of sources to string and write it to index.html
-    //         data = data.replace(/\<\/div class>/g, toPrepand.join('') + '</div>');
-    //         //console.log(data);
-    //         fs.writeFile('./index.html', data, 'utf8', function (err) {
-    //             if (err) return console.log(err);
-    //         });
-            
-    //     });
-    //     alreadyDisplayed = true;
-    // }
-    // open/create express server to display webpage
-    // app.use(express.static(__dirname));
-    // app.get('/', function (req, res) {
-    //     res.sendFile(__dirname + '/index.html');
-    // })
-    app.listen(port, () => console.log('The server running on Port ' + port));
-
 });
