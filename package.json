@@ -9,12 +9,12 @@
   "author": "Dominic Quintana",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.17.1",
     "fetch": "^1.1.0",
-    "image-size": "^0.8.3",
     "jquery": "^3.5.1",
     "jsdom": "^16.3.0",
     "nodemon": "^2.0.4",
-    "readimage": "^1.1.1"
+    "readimage": "^1.1.1",
+    "express": "^4.17.1",
+    "image-size": "^0.8.3"
   }
 }

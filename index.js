@@ -13,6 +13,9 @@ const port = 3000;
 let $ = require('jquery')(window1);
 console.log('version:', $.fn.jquery);
 
+let imgArrayCount = 0;
+let imgArrayPopulatedCount = 0;
+
 let regexp = /<img[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/g; // regular experssion for img tags
 
 // Image object to store image properties
@@ -29,8 +32,8 @@ let imgArray = new Array(); // create an array of image objects
 // function that downloads images from https://www.vizio.com/en/smartcast/... 
 let download = function(uri, filename, callback){
     request.head(uri, function(err, res, body){
-      console.log('content-type:', res.headers['content-type']);
-      console.log('content-length:', res.headers['content-length']);
+      //console.log('content-type:', res.headers['content-type']);
+      //console.log('content-length:', res.headers['content-length']);
   
       request(uri).pipe(fs.createWriteStream(filename)).on('close', callback); // request/write image from url
     });
@@ -43,6 +46,57 @@ let populateArray = function(id, fileName, url) {
     // read file to get dimensions
     let dimensions = sizeOf(filedata); // get dimensions
     imgArray.push(new Image(id, fileName, dimensions.height, dimensions.width, url)); // push this image to the array of objs
+    imgArrayPopulatedCount++;
+    console.log("ImageArrayProgress: " + imgArrayPopulatedCount + ":" + imgArrayCount);
+    if (imgArrayCount === imgArrayPopulatedCount) {
+        populateHtmlImages();
+    }
+}
+
+let populateHtmlImages = function() {
+    console.log("Entered populate images in html file");
+    // sort function from smallest to greatest height
+    console.log(imgArray.length);
+    imgArray.sort(function(a, b) {
+        if (a.height - b.height !== 0)
+            return a.height - b.height;
+        return a.width - b.width;
+    })
+    //console.log(imgArray);
+
+    const imageDir = __dirname + "\\images\\";
+
+    let alreadyDisplayed = false;
+
+    // display images on webpage (using a regex -- very sloppy hehe)
+    if (alreadyDisplayed === false) {
+        console.log("Building index.html file");
+        // read html file from memory
+        fs.readFile("./index.html", 'utf8', function(err, data) {
+            if (err) return console.log(err);
+
+            let toPrepand = [];
+            // get each image source and append to an array
+            for (let img of imgArray){
+                console.log(img.url);
+                toPrepand.push("<img src=" + "\"" + ".\\images\\" + img.desc + "\"" + ">\n");
+                console.log(toPrepand);
+            }
+            // convert array of sources to string and write it to index.html
+            data = data.replace(/\<\/div>/g, toPrepand.join(' ') + '</div>');
+            console.log(data);
+            fs.writeFile('./index.html', data, 'utf8', function (err) {
+                if (err) return console.log(err);
+            });
+            
+        });
+        alreadyDisplayed = true;
+    }
+
+    app.use(express.static(__dirname));
+    app.get('/', function (req, res) {
+        res.sendFile(__dirname + '/index.html');
+    })
 }
 
 fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
@@ -52,6 +106,8 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
     let images = htmlBody.match(regexp); // match all the img tags and return
     let i = 0;
     
+    imgArrayCount = images.length;
+
     // iterate through each image
     for (let img of images) {
         let $content = $($.parseHTML(img)); // convert string to html so jquery can parse it
@@ -80,44 +136,44 @@ fetchUrl("https://www.vizio.com/en/smartcast", function(error, meta, body) {
         }
     } 
 
-    // sort function from smallest to greatest height
-    imgArray.sort(function(a, b) {
-        if (a.height - b.height !== 0)
-            return a.height - b.height;
-        return a.width - b.width;
-    })
-    console.log(imgArray);
+    // // sort function from smallest to greatest height
+    // imgArray.sort(function(a, b) {
+    //     if (a.height - b.height !== 0)
+    //         return a.height - b.height;
+    //     return a.width - b.width;
+    // })
+    // console.log(imgArray);
 
-    const imageDir = __dirname + "\\images\\";
+    // const imageDir = __dirname + "\\images\\";
 
-    let alreadyDisplayed = true;
+    // let alreadyDisplayed = true;
 
-    // display images on webpage (using a regex -- very sloppy hehe)
-    if (alreadyDisplayed === false) {
-        // read html file from memory
-        fs.readFile("./index.html", 'utf8', function(err, data) {
-            if (err) return console.log(err);
+    // // display images on webpage (using a regex -- very sloppy hehe)
+    // if (alreadyDisplayed === false) {
+    //     // read html file from memory
+    //     fs.readFile("./index.html", 'utf8', function(err, data) {
+    //         if (err) return console.log(err);
         
-            let toPrepand = [];
-            // get each image source and append to an array
-            for (let img of imgArray){
-                toPrepand.push("<img src=" + "\"" + ".\\images\\" + img.desc + "\"" + ">");
-            }
-            // convert array of sources to string and write it to index.html
-            data = data.replace(/\<\/div class>/g, toPrepand.join('') + '</div>');
-            //console.log(data);
-            fs.writeFile('./index.html', data, 'utf8', function (err) {
-                if (err) return console.log(err);
-            });
+    //         let toPrepand = [];
+    //         // get each image source and append to an array
+    //         for (let img of imgArray){
+    //             toPrepand.push("<img src=" + "\"" + ".\\images\\" + img.desc + "\"" + ">");
+    //         }
+    //         // convert array of sources to string and write it to index.html
+    //         data = data.replace(/\<\/div class>/g, toPrepand.join('') + '</div>');
+    //         //console.log(data);
+    //         fs.writeFile('./index.html', data, 'utf8', function (err) {
+    //             if (err) return console.log(err);
+    //         });
             
-        });
-        alreadyDisplayed = true;
-    }
+    //     });
+    //     alreadyDisplayed = true;
+    // }
     // open/create express server to display webpage
-    app.use(express.static(__dirname));
-    app.get('/', function (req, res) {
-        res.sendFile(__dirname + '/index.html');
-    })
+    // app.use(express.static(__dirname));
+    // app.get('/', function (req, res) {
+    //     res.sendFile(__dirname + '/index.html');
+    // })
     app.listen(port, () => console.log('The server running on Port ' + port));
 
 });
