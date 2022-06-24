@@ -13,7 +13,7 @@
     "fetch": "^1.1.0",
     "image-size": "^0.8.3",
     "jquery": "^3.5.1",
-    "jsdom": "^16.3.0",
+    "jsdom": "^16.5.0",
     "nodemon": "^2.0.4",
     "readimage": "^1.1.1"
   }
